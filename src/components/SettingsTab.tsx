@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, exportData, importData } from '../db'
+import { db, exportData, importData, EVENT_COLORS } from '../db'
 
 function SettingsTab() {
   const eventTypes = useLiveQuery(() => db.eventTypes.toArray())
   const [newTypeName, setNewTypeName] = useState('')
   const [newTypeIsNumeric, setNewTypeIsNumeric] = useState(false)
+  const [newTypeColor, setNewTypeColor] = useState(EVENT_COLORS[0])
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -23,10 +24,12 @@ function SettingsTab() {
     await db.eventTypes.add({
       name: newTypeName.trim(),
       isNumeric: newTypeIsNumeric,
+      color: newTypeColor,
     })
 
     setNewTypeName('')
     setNewTypeIsNumeric(false)
+    setNewTypeColor(EVENT_COLORS[0])
     showMessage('success', 'Event type added!')
   }
 
@@ -136,6 +139,21 @@ function SettingsTab() {
           />
           <span className="text-gray-700">Has numeric value</span>
         </label>
+        <div className="mb-3">
+          <span className="text-gray-700 text-sm block mb-2">Color</span>
+          <div className="flex gap-2 flex-wrap">
+            {EVENT_COLORS.map((color) => (
+              <button
+                key={color}
+                onClick={() => setNewTypeColor(color)}
+                className={`w-8 h-8 rounded-full ${
+                  newTypeColor === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
+                }`}
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+        </div>
         <button
           onClick={handleAddType}
           className="w-full bg-blue-500 text-white py-3 rounded-lg font-medium active:bg-blue-600"
@@ -154,10 +172,14 @@ function SettingsTab() {
                 key={et.id}
                 className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
               >
-                <div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: et.color || '#3b82f6' }}
+                  />
                   <span className="text-gray-700">{et.name}</span>
                   {et.isNumeric && (
-                    <span className="ml-2 text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
+                    <span className="ml-1 text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
                       numeric
                     </span>
                   )}

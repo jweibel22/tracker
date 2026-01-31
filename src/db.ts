@@ -4,7 +4,19 @@ export interface EventType {
   id?: number
   name: string
   isNumeric: boolean
+  color: string
 }
+
+export const EVENT_COLORS = [
+  '#3b82f6', // blue
+  '#ef4444', // red
+  '#22c55e', // green
+  '#f59e0b', // amber
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#f97316', // orange
+]
 
 export interface Event {
   id?: number
@@ -22,6 +34,17 @@ const db = new Dexie('LifeEventTracker') as Dexie & {
 db.version(1).stores({
   eventTypes: '++id, name',
   events: '++id, typeId, day, createdAt'
+})
+
+db.version(2).stores({
+  eventTypes: '++id, name',
+  events: '++id, typeId, day, createdAt'
+}).upgrade(tx => {
+  return tx.table('eventTypes').toCollection().modify((eventType, ref) => {
+    if (!eventType.color) {
+      ref.value.color = EVENT_COLORS[ref.value.id! % EVENT_COLORS.length]
+    }
+  })
 })
 
 export { db }
@@ -62,10 +85,10 @@ export async function seedDefaultEventTypes(): Promise<void> {
   const count = await db.eventTypes.count()
   if (count === 0) {
     await db.eventTypes.bulkAdd([
-      { name: 'Exercise', isNumeric: false },
-      { name: 'Meditation', isNumeric: false },
-      { name: 'Water (glasses)', isNumeric: true },
-      { name: 'Sleep (hours)', isNumeric: true },
+      { name: 'Exercise', isNumeric: false, color: '#22c55e' },
+      { name: 'Meditation', isNumeric: false, color: '#8b5cf6' },
+      { name: 'Water (glasses)', isNumeric: true, color: '#3b82f6' },
+      { name: 'Sleep (hours)', isNumeric: true, color: '#06b6d4' },
     ])
   }
 }

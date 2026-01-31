@@ -9,9 +9,9 @@ function HistoryTab() {
   const events = useLiveQuery(() => db.events.toArray())
 
   const eventTypeMap = useMemo(() => {
-    const map: Record<number, string> = {}
+    const map: Record<number, { name: string; color: string }> = {}
     eventTypes?.forEach((et) => {
-      map[et.id!] = et.name
+      map[et.id!] = { name: et.name, color: et.color || '#3b82f6' }
     })
     return map
   }, [eventTypes])
@@ -115,6 +115,8 @@ function HistoryTab() {
           const dayEvents = calendarData.eventsByDay[dayKey] || []
           const hasEvents = dayEvents.length > 0
           const isToday = dayKey === today
+          // Get unique colors for this day's events
+          const eventColors = [...new Set(dayEvents.map(e => eventTypeMap[e.typeId]?.color || '#3b82f6'))]
 
           return (
             <button
@@ -122,15 +124,22 @@ function HistoryTab() {
               onClick={() => setSelectedDay(dayKey === selectedDay ? null : dayKey)}
               className={`aspect-square rounded-lg flex flex-col items-center justify-center text-sm relative
                 ${isToday ? 'ring-2 ring-blue-500' : ''}
-                ${hasEvents ? 'bg-blue-100' : 'bg-white'}
-                ${selectedDay === dayKey ? 'bg-blue-200' : ''}
+                ${selectedDay === dayKey ? 'bg-gray-200' : 'bg-white'}
               `}
             >
               <span className={isToday ? 'font-bold text-blue-600' : 'text-gray-700'}>
                 {day}
               </span>
               {hasEvents && (
-                <span className="text-xs text-blue-600">{dayEvents.length}</span>
+                <div className="flex gap-0.5 mt-0.5">
+                  {eventColors.slice(0, 4).map((color, idx) => (
+                    <span
+                      key={idx}
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
               )}
             </button>
           )
@@ -150,27 +159,36 @@ function HistoryTab() {
           </h3>
           {calendarData.eventsByDay[selectedDay]?.length ? (
             <ul className="space-y-2">
-              {calendarData.eventsByDay[selectedDay]?.map((event) => (
-                <li
-                  key={event.id}
-                  className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
-                >
-                  <span className="text-gray-700">
-                    {eventTypeMap[event.typeId] || 'Unknown'}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    {event.value !== null && (
-                      <span className="text-blue-600 font-medium">{event.value}</span>
-                    )}
-                    <button
-                      onClick={() => handleDelete(event.id!)}
-                      className="text-red-500 text-sm px-2 py-1"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {calendarData.eventsByDay[selectedDay]?.map((event) => {
+                const eventType = eventTypeMap[event.typeId]
+                return (
+                  <li
+                    key={event.id}
+                    className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: eventType?.color || '#3b82f6' }}
+                      />
+                      <span className="text-gray-700">
+                        {eventType?.name || 'Unknown'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {event.value !== null && (
+                        <span className="text-blue-600 font-medium">{event.value}</span>
+                      )}
+                      <button
+                        onClick={() => handleDelete(event.id!)}
+                        className="text-red-500 text-sm px-2 py-1"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           ) : (
             <p className="text-gray-500">No events on this day</p>
