@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/tracker/', // Change to '/' if using username.github.io root
   plugins: [
     react(),
     VitePWA({
