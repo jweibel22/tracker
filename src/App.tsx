@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { seedDefaultEventTypes } from './db'
 import RegisterTab from './components/RegisterTab'
 import HistoryTab from './components/HistoryTab'
+import RecentTab from './components/RecentTab'
 import SettingsTab from './components/SettingsTab'
 
-type Tab = 'register' | 'history' | 'settings'
+type Tab = 'register' | 'history' | 'recent' | 'settings'
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('register')
@@ -24,6 +25,7 @@ function App() {
       <main className="flex-1 overflow-auto">
         {activeTab === 'register' && <RegisterTab />}
         {activeTab === 'history' && <HistoryTab />}
+        {activeTab === 'recent' && <RecentTab />}
         {activeTab === 'settings' && <SettingsTab />}
       </main>
 
@@ -49,7 +51,18 @@ function App() {
           }`}
         >
           <div className="text-xl">📅</div>
-          <div className="text-xs">History</div>
+          <div className="text-xs">Calendar</div>
+        </button>
+        <button
+          onClick={() => setActiveTab('recent')}
+          className={`flex-1 py-3 text-center ${
+            activeTab === 'recent'
+              ? 'text-blue-500 border-t-2 border-blue-500 -mt-[2px]'
+              : 'text-gray-500'
+          }`}
+        >
+          <div className="text-xl">☰</div>
+          <div className="text-xs">Recent</div>
         </button>
         <button
           onClick={() => setActiveTab('settings')}

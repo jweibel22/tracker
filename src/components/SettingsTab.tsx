@@ -34,8 +34,16 @@ function SettingsTab() {
   }
 
   const handleDeleteType = async (id: number) => {
-    if (confirm('Delete this event type? Events of this type will remain in history.')) {
-      await db.eventTypes.delete(id)
+    const eventCount = await db.events.where('typeId').equals(id).count()
+    const message = eventCount > 0
+      ? `Delete this event type and ${eventCount} associated event${eventCount > 1 ? 's' : ''}?`
+      : 'Delete this event type?'
+
+    if (confirm(message)) {
+      await db.transaction('rw', [db.eventTypes, db.events], async () => {
+        await db.events.where('typeId').equals(id).delete()
+        await db.eventTypes.delete(id)
+      })
       showMessage('success', 'Event type deleted')
     }
   }
