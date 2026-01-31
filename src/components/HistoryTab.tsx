@@ -65,6 +65,12 @@ function HistoryTab() {
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
+  const handleDelete = async (eventId: number) => {
+    if (confirm('Delete this event?')) {
+      await db.events.delete(eventId)
+    }
+  }
+
   return (
     <div className="p-4">
       {/* Month Navigation */}
@@ -152,9 +158,17 @@ function HistoryTab() {
                   <span className="text-gray-700">
                     {eventTypeMap[event.typeId] || 'Unknown'}
                   </span>
-                  {event.value !== null && (
-                    <span className="text-blue-600 font-medium">{event.value}</span>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {event.value !== null && (
+                      <span className="text-blue-600 font-medium">{event.value}</span>
+                    )}
+                    <button
+                      onClick={() => handleDelete(event.id!)}
+                      className="text-red-500 text-sm px-2 py-1"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
