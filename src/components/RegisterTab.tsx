@@ -1,11 +1,22 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getTodayString, type EventType } from '../db'
 
 function RegisterTab() {
   const eventTypes = useLiveQuery(() => db.eventTypes.toArray())
+  const today = getTodayString()
+  const todaysEvents = useLiveQuery(
+    () => db.events.where('day').equals(today).toArray(),
+    [today]
+  )
   const [numericValues, setNumericValues] = useState<Record<number, string>>({})
   const [feedback, setFeedback] = useState<string | null>(null)
+
+  const registeredToday = useMemo(() => {
+    const set = new Set<number>()
+    todaysEvents?.forEach((e) => set.add(e.typeId))
+    return set
+  }, [todaysEvents])
 
   const handleRegister = async (eventType: EventType) => {
     const value = eventType.isNumeric
@@ -44,43 +55,59 @@ function RegisterTab() {
       )}
 
       <div className="space-y-3">
-        {eventTypes?.map((eventType) => (
-          <div
-            key={eventType.id}
-            className="bg-white rounded-lg shadow p-4 flex items-center gap-3"
-          >
-            {eventType.isNumeric ? (
-              <>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={numericValues[eventType.id!] || ''}
-                  onChange={(e) =>
-                    setNumericValues((prev) => ({
-                      ...prev,
-                      [eventType.id!]: e.target.value,
-                    }))
-                  }
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center text-lg"
-                />
+        {eventTypes?.map((eventType) => {
+          const isRegistered = registeredToday.has(eventType.id!)
+          return (
+            <div
+              key={eventType.id}
+              className="bg-white rounded-lg shadow p-4 flex items-center gap-3"
+            >
+              {eventType.isNumeric ? (
+                <>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={numericValues[eventType.id!] || ''}
+                    onChange={(e) =>
+                      setNumericValues((prev) => ({
+                        ...prev,
+                        [eventType.id!]: e.target.value,
+                      }))
+                    }
+                    disabled={isRegistered}
+                    className={`w-20 px-3 py-2 border border-gray-300 rounded-lg text-center text-lg ${
+                      isRegistered ? 'bg-gray-100 text-gray-400' : ''
+                    }`}
+                  />
+                  <button
+                    onClick={() => handleRegister(eventType)}
+                    disabled={isRegistered}
+                    className={`flex-1 py-3 px-4 rounded-lg font-medium ${
+                      isRegistered
+                        ? 'bg-gray-300 text-gray-500'
+                        : 'bg-blue-500 text-white active:bg-blue-600'
+                    }`}
+                  >
+                    {isRegistered ? `${eventType.name} (done)` : eventType.name}
+                  </button>
+                </>
+              ) : (
                 <button
                   onClick={() => handleRegister(eventType)}
-                  className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg font-medium active:bg-blue-600"
+                  disabled={isRegistered}
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium ${
+                    isRegistered
+                      ? 'bg-gray-300 text-gray-500'
+                      : 'bg-blue-500 text-white active:bg-blue-600'
+                  }`}
                 >
-                  {eventType.name}
+                  {isRegistered ? `${eventType.name} (done)` : eventType.name}
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={() => handleRegister(eventType)}
-                className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg font-medium active:bg-blue-600"
-              >
-                {eventType.name}
-              </button>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {(!eventTypes || eventTypes.length === 0) && (
