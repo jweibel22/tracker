@@ -5,18 +5,21 @@ import { db, getTodayString, type EventType } from '../db'
 function RegisterTab() {
   const eventTypes = useLiveQuery(() => db.eventTypes.toArray())
   const today = getTodayString()
-  const todaysEvents = useLiveQuery(
-    () => db.events.where('day').equals(today).toArray(),
-    [today]
+  const [selectedDate, setSelectedDate] = useState(today)
+  const selectedDateEvents = useLiveQuery(
+    () => db.events.where('day').equals(selectedDate).toArray(),
+    [selectedDate]
   )
   const [numericValues, setNumericValues] = useState<Record<number, string>>({})
   const [feedback, setFeedback] = useState<string | null>(null)
 
-  const registeredToday = useMemo(() => {
+  const isToday = selectedDate === today
+
+  const registeredOnDate = useMemo(() => {
     const set = new Set<number>()
-    todaysEvents?.forEach((e) => set.add(e.typeId))
+    selectedDateEvents?.forEach((e) => set.add(e.typeId))
     return set
-  }, [todaysEvents])
+  }, [selectedDateEvents])
 
   const handleRegister = async (eventType: EventType) => {
     const value = eventType.isNumeric
@@ -31,7 +34,7 @@ function RegisterTab() {
 
     await db.events.add({
       typeId: eventType.id!,
-      day: getTodayString(),
+      day: selectedDate,
       createdAt: new Date().toISOString(),
       value,
     })
@@ -48,6 +51,24 @@ function RegisterTab() {
     <div className="p-4">
       <h2 className="text-lg font-semibold mb-4 text-gray-700">Register Event</h2>
 
+      {/* Date Picker */}
+      <div className="mb-4 flex items-center gap-2">
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white"
+        />
+        {!isToday && (
+          <button
+            onClick={() => setSelectedDate(today)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium active:bg-blue-600"
+          >
+            Today
+          </button>
+        )}
+      </div>
+
       {feedback && (
         <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-center">
           {feedback}
@@ -56,7 +77,7 @@ function RegisterTab() {
 
       <div className="space-y-3">
         {eventTypes?.map((eventType) => {
-          const isRegistered = registeredToday.has(eventType.id!)
+          const isRegistered = registeredOnDate.has(eventType.id!)
           return (
             <div
               key={eventType.id}
