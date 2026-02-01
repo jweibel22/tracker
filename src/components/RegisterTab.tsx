@@ -110,7 +110,7 @@ function RegisterTab() {
                         : 'bg-blue-500 text-white active:bg-blue-600'
                     }`}
                   >
-                    {isRegistered ? `${eventType.name} (done)` : eventType.name}
+                    {isRegistered ? eventType.name : eventType.name}
                   </button>
                 </>
               ) : (
@@ -123,7 +123,7 @@ function RegisterTab() {
                       : 'bg-blue-500 text-white active:bg-blue-600'
                   }`}
                 >
-                  {isRegistered ? `${eventType.name} (done)` : eventType.name}
+                  {isRegistered ? eventType.name : eventType.name}
                 </button>
               )}
             </div>
